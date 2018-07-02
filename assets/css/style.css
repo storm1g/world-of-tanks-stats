@@ -1,0 +1,33 @@
+#content {
+  padding-top: 10%;
+  text-align: center;
+}
+
+.tanktype {
+  display: inline-block;
+  width: 20px;
+}
+
+.masterymark4 {
+  display: inline-block;
+  width: 23px;
+  height: 24px;
+  background: url(../img/mastery_ace.png) no-repeat center;
+}
+
+.TD {
+  background: url(https://static-cdn.wot-life.com/img/tanktypes/td.svg) no-repeat center;
+  height: 14px;
+}
+
+.moe {
+  height: 30px;
+}
+
+
+
+@media (min-width: 1200px) {
+  #contentContainer {
+      max-width: 1600px;
+  }
+}
