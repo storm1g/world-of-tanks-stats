@@ -27,7 +27,7 @@
 
 
 @media (min-width: 1200px) {
-  #contentContainer {
+  .container {
       max-width: 1600px;
   }
 }
