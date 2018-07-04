@@ -1,22 +1,60 @@
 #content {
-  padding-top: 10%;
+  padding-top: 5%;
   text-align: center;
 }
+
+#content table tbody td:nth-child(2) {
+  text-align: left;
+}
+
+.masterymark {
+  display: inline-block;
+  width: 23px;
+  height: 24px;
+}
+
+.mastery1 {
+  background: url(../img/mastery/1.png) no-repeat center;
+}
+
+.mastery2 {
+  background: url(../img/mastery/2.png) no-repeat center;
+}
+
+.mastery3 {
+  background: url(../img/mastery/3.png) no-repeat center;
+}
+
+.mastery4 {
+  background: url(../img/mastery/4.png) no-repeat center;
+}
+
 
 .tanktype {
   display: inline-block;
   width: 20px;
+  height: 20px;
 }
 
-.masterymark4 {
-  display: inline-block;
-  width: 23px;
-  height: 24px;
-  background: url(../img/mastery_ace.png) no-repeat center;
+.AT-SPG {
+  background: url(../img/tanktypes/td.svg) no-repeat center;
+  height: 14px;
 }
 
-.TD {
-  background: url(https://static-cdn.wot-life.com/img/tanktypes/td.svg) no-repeat center;
+.lightTank {
+  background: url(../img/tanktypes/light.svg) no-repeat center;
+}
+
+.mediumTank {
+  background: url(../img/tanktypes/med.svg) no-repeat center;
+}
+
+.heavyTank {
+  background: url(../img/tanktypes/heavy.svg) no-repeat center;
+}
+
+.SPG {
+  background: url(../img/tanktypes/arty.svg) no-repeat center;
   height: 14px;
 }
 
