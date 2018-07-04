@@ -1,10 +1,21 @@
 let playerID = 508501260; // koki1g - 551765902, storm__ - 508501260
 let tanks,
     playerStats,
-    playerTanks;
+    playerTanks,
+    playerMoe;
 
 
 getTanks();
+
+// Search button event listener
+$('.navbar form button').on("click", displayAll);
+
+
+// Gets players' stats and creates a complete table with all data
+function displayAll(){
+  getPlayerTankStats();
+  setTimeout(makeTable, 4000);
+};
 
 
 function makeTable(){
