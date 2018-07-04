@@ -7,6 +7,23 @@ let tanks,
 getTanks();
 
 
+function makeTable(){
+  for (let i = 0; i < playerStats.data[playerID].length; i++){
+    $('<tr>' + '<th><img src=' + tanks.data[playerStats.data[playerID][i].tank_id].images.contour_icon + '></th>' + 
+        '<td>' + tanks.data[playerStats.data[playerID][i].tank_id].short_name + '</td>' + 
+        '<td>' + tanks.data[playerStats.data[playerID][i].tank_id].nation + '</td>' +
+        '<td>' + tanks.data[playerStats.data[playerID][i].tank_id].type + '</td>' +
+        '<td>' + tanks.data[playerStats.data[playerID][i].tank_id].tier + '</td>' +
+        '<td>' + Number(Math.round(playerStats.data[playerID][i].all.damage_dealt / playerStats.data[playerID][i].all.battles +"e2")+"e-2") + '</td>' +
+        '<td>' + playerStats.data[playerID][i].all.battle_avg_xp + '</td>' +
+        '<td>' + playerStats.data[playerID][i].all.battles + '</td>' +
+        '<td>' + Number(Math.round(playerStats.data[playerID][i].all.wins / playerStats.data[playerID][i].all.battles +"e4") + "e-2") + "%" + '</td>' +
+        '<td>' + playerStats.data[playerID][i].mark_of_mastery + '</td>' +
+      '</tr>'
+    ).appendTo("table tbody");
+  }
+};
+
 // Gets a list of all tanks in the game with: is_premium, contour_icon, short_name, nation, tier
 function getTanks(){
   let xhr = new XMLHttpRequest();
