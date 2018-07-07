@@ -1,4 +1,3 @@
-let playerID = 508501260; // koki1g - 551765902, storm__ - 508501260
 let tanks;
     // playerStats,
     // playerMoe;
@@ -20,15 +19,30 @@ function getTanks(){
 
 
 // Search button event listener
-$('.navbar form button').on("click", displayAll);
+$('.navbar form button').on("click", displayStats);
 
 
 // Gets players' stats and creates a complete table with all data
-function displayAll(){
+function displayStats(){
   let playerStats;
   let playerMoe;
+  let playerID;
+  let playerName = $('.navbar form input').val();
 
+  $('table tbody').html("");
+
+// Gets the players' ID from the api
   $.when(
+    $.ajax({
+      method: "GET",
+      url: "https://api.worldoftanks.eu/wot/account/list/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&search=" + playerName + "&type=exact",
+      dataType: "json"
+    }).done(function(data){
+      playerID = data.data[0].account_id;
+      console.log('Players\' ID retrieved.' + playerID);
+    })
+  ).then(function(){
+    $.when(
   // Gets a list of players' tanks + wins, battles, damage dealt, avg. xp and mark of mastery (0-4)
     $.ajax({
       method: "GET",
@@ -48,16 +62,10 @@ function displayAll(){
       playerMoe = data.data[playerID];
       console.log('Players\' achievements retrieved.');
     })
-
   ).then(makeTable);
-
-  // function checkMoe(achi, mark){
-  //   if (achi.hasOwnProperty("marksOnGun")){ 
-  //     return mark;
-  //   }
-  // }
-
-
+}
+  );
+  
   function makeTable(){
     for (let i = 0, output; i < playerStats.length; i++){
       output = '<tr>' + 
