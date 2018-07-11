@@ -1,6 +1,5 @@
-let tanks;
-    // playerStats,
-    // playerMoe;
+let tanks,
+    playerStats;
 
 
 getTanks();
@@ -13,7 +12,7 @@ function getTanks(){
     dataType: "json"
   }).done(function(data){
     tanks = data.data;
-    console.log('Tanks list retrieved.');
+    console.log('List of tanks retrieved.');
   });
 };
 
@@ -24,15 +23,13 @@ $('.navbar form button').on("click", displayStats);
 
 // Gets players' stats and creates a complete table with all data
 function displayStats(){
-  let playerStats;
-  let playerMoe;
   let playerID;
   let playerName = $('.navbar form input').val();
 
   $('table tbody').html("");
 
-// Gets the players' ID from the api
   $.when(
+    // Gets a players ID
     $.ajax({
       method: "GET",
       url: "https://api.worldoftanks.eu/wot/account/list/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&search=" + playerName + "&type=exact",
@@ -41,7 +38,7 @@ function displayStats(){
       playerID = data.data[0].account_id;
       console.log('Players\' ID retrieved.' + playerID);
     })
-  ).then(function(){
+  ).then(function() {
     $.when(
   // Gets a list of players' tanks + wins, battles, damage dealt, avg. xp and mark of mastery (0-4)
     $.ajax({
@@ -54,19 +51,28 @@ function displayStats(){
     }),
 
   // Gets a list of players' achievements including Marks of Excellence
-    $.ajax({
-      method: "GET",
-      url: "https://api.worldoftanks.eu/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=achievements%2C+tank_id",
-      dataType: "json"
-    }).done(function(data){
-      playerMoe = data.data[playerID];
-      console.log('Players\' achievements retrieved.');
-    })
-  ).then(makeTable);
-}
-  );
+    ).then(function() {
+      $.ajax({
+        method: "GET",
+        url: "https://api.worldoftanks.eu/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=achievements%2C+tank_id",
+        dataType: "json"
+      }).done(function(data){
+        for (let i = 0; i < data.data[playerID].length; i++){
+          playerStats[i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
+        }
+        // playerMoe = data.data[playerID];
+        console.log('Players\' Marks of Excellence retrieved and stored into playerStats.');
+        playerStats.sort(function (a, b) {
+          return b.all.battles - a.all.battles;
+        });
+        console.log('playerStats sorted by number of battles')
+        makeTable();
+      })
+    });
+  });
   
   function makeTable(){
+    console.log("making a table");
     for (let i = 0, output; i < playerStats.length; i++){
       output = '<tr>' + 
           '<th><img src=' + tanks[playerStats[i].tank_id].images.contour_icon + '></th>' + 
@@ -85,8 +91,8 @@ function displayStats(){
             output += '<td></td>'
           };
 
-          if (playerMoe[i].achievements.marksOnGun){
-            output += '<td>' + '<img src="assets/img/marks/' + tanks[playerStats[i].tank_id].nation + '_' + playerMoe[i].achievements.marksOnGun + '.png" class="moe"></td>';
+          if (playerStats[i].all.marksOnGun){
+            output += '<td>' + '<img src="assets/img/marks/' + tanks[playerStats[i].tank_id].nation + '_' + playerStats[i].all.marksOnGun + '.png" class="moe"></td>';
           } else {
             output += '<td></td>';
           };
@@ -98,3 +104,25 @@ function displayStats(){
   };
 
 };
+
+
+// playerStats[0].all.markOfMastery = playerMoe[0].achievements.markOfMastery - dodavanje posebnih statova
+
+/* sortovanje arraya sa statovima
+ playerStats.sort(function (a, b) {
+  return a.tank_id - b.tank_id;
+}); 
+*/
+
+/* $.ajax({
+        method: "GET",
+        url: "https://api.worldoftanks.eu/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=achievements%2C+tank_id",
+        dataType: "json"
+      }).done(function(data){
+        for (let i = 0; i < data.data[playerID].length; i++){
+          playerStats[i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
+        }
+        // playerMoe = data.data[playerID];
+        console.log('Players\' achievements retrieved.');
+      })
+*/
