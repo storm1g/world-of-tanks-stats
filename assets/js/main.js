@@ -18,7 +18,7 @@ function getTanks(){
 
 
 // Search button event listener
-$('.navbar form button').on("click", displayStats);
+$('#search form button').on("click", displayStats);
 
 $('#moe').on("click", function(){
   playerStats.sort(function (a, b) {
@@ -44,13 +44,17 @@ $('#battles').on("click", function(){
 // Gets players' stats and creates a complete table with all data
 function displayStats(){
   let playerID;
-  let playerName = $('.navbar form input').val();
+  let playerName = $('#search form input').val();
+  let server = $("#inlineFormCustomSelectPref").val();
+
+  $("table").addClass("hidden")
+  $(".loading-ring").removeClass("hidden");
 
   $.when(
     // Gets a players ID
     $.ajax({
       method: "GET",
-      url: "https://api.worldoftanks.eu/wot/account/list/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&search=" + playerName + "&type=exact",
+      url: `https://api.worldoftanks.${server}/wot/account/list/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&search=${playerName}&type=exact`,
       dataType: "json"
     }).done(function(data){
       playerID = data.data[0].account_id;
@@ -61,7 +65,7 @@ function displayStats(){
   // Gets a list of players' tanks + wins, battles, damage dealt, avg. xp and mark of mastery (0-4)
     $.ajax({
       method: "GET",
-      url: "https://api.worldoftanks.eu/wot/tanks/stats/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=all.damage_dealt%2C+all.battles%2C+all.battle_avg_xp%2C+all.wins%2C+mark_of_mastery%2C+tank_id",
+      url: `https://api.worldoftanks.${server}/wot/tanks/stats/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=${playerID}&fields=all.damage_dealt%2C+all.battles%2C+all.battle_avg_xp%2C+all.wins%2C+mark_of_mastery%2C+tank_id`,
       dataType: "json"
     }).done(function(data){
       playerStats = data.data[playerID];
@@ -72,7 +76,7 @@ function displayStats(){
     ).then(function() {
       $.ajax({
         method: "GET",
-        url: "https://api.worldoftanks.eu/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=achievements%2C+tank_id",
+        url: `https://api.worldoftanks.${server}/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=${playerID}&fields=achievements%2C+tank_id`,
         dataType: "json"
       }).done(function(data){
         for (let i = 0; i < data.data[playerID].length; i++){
@@ -100,6 +104,11 @@ function makeTable(){
   $('table tbody').html("");
 
   for (let i = 0, output; i < playerStats.length; i++){
+
+    if (tanks[playerStats[i].tank_id] === undefined) {
+      continue
+    }
+
     output = '<tr>' + 
         '<th><img src=' + tanks[playerStats[i].tank_id].images.contour_icon + '></th>' + 
         '<td>' + tanks[playerStats[i].tank_id].short_name + '</td>' + 
@@ -127,6 +136,9 @@ function makeTable(){
 
     $(output).appendTo("table tbody");
   }
+
+  $(".loading-ring").addClass("hidden");
+  $("table").removeClass("hidden");
 };
 
 function propComparator(prop) {
