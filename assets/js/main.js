@@ -50,8 +50,9 @@
     $("table").addClass("hidden")
     $(".loading-ring").removeClass("hidden");
 
+    // If players statistics exist in memory - show them, otherwise get them from the API and then show them
     if(players[playerName]){
-      console.log("20!");
+      makeTable(players[playerName]);
     } else {   
       $.when(
         // Gets player ID
@@ -100,12 +101,13 @@
               }
             }
             console.log('Players\' Marks of Excellence retrieved and stored');
-            console.log(players[playerName]);
+
             // Sorts the player object by battles played
             players[playerName].sort(sortBy("all", "battles"));
             console.log('Stats sorted by number of battles');
+
             makeTable(players[playerName]);
-            console.log('done!');
+            console.log('Done!');
           })
         });
       });
@@ -113,7 +115,7 @@
   };
 
   function makeTable(player){
-    console.log("making a table");
+    console.log("Making a table");
     
     $('table tbody').html("");
 
@@ -124,9 +126,6 @@
         console.log(i);
         continue
       };
-
-
-
 
       output = '<tr>' + 
           '<th><img src=' + tanks[player[i].tank_id].images.contour_icon + '></th>' + 
@@ -169,24 +168,3 @@
       };
     };
   };
-
-
-
-  // playerStats.sort(sortBy('batt'));
-
-  // playerStats[0].all.markOfMastery = playerMoe[0].achievements.markOfMastery - dodavanje posebnih statova
-
-
-
-  /* $.ajax({
-          method: "GET",
-          url: "https://api.worldoftanks.eu/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=" + playerID + "&fields=achievements%2C+tank_id",
-          dataType: "json"
-        }).done(function(data){
-          for (let i = 0; i < data.data[playerID].length; i++){
-            playerStats[i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
-          }
-          // playerMoe = data.data[playerID];
-          console.log('Players\' achievements retrieved.');
-        })
-  */
