@@ -22,7 +22,7 @@
   $('#search form button').on("click", displayStats);
 
   // Sorting
-  $('#moe').on("click", function(){
+  /*$('#moe').on("click", function(){
     playerStats.sort(sortBy("all", "marksOnGun"));
     makeTable();
   });
@@ -36,7 +36,7 @@
     playerStats.sort(sortBy("all", "battles"));
     makeTable();
   });
-
+  */
 
   // Gets players' stats and creates a complete table with all data
   function displayStats(){
@@ -47,8 +47,7 @@
     let playerName = $('#search form input').val();
     let server = $("#inlineFormCustomSelectPref").val();
 
-    $("table").addClass("hidden")
-    $(".loading-ring").removeClass("hidden");
+    showLoading(1);
 
     // If players statistics exist in memory - show them, otherwise get them from the API and then show them
     if(players[playerName]){
@@ -79,7 +78,6 @@
           url: `https://api.worldoftanks.${server}/wot/tanks/stats/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=${playerID}&fields=all.damage_dealt%2C+all.battles%2C+all.battle_avg_xp%2C+all.wins%2C+mark_of_mastery%2C+tank_id`,
           dataType: "json"
         }).done(function(data){
-          //playerStats = data.data[playerID];
           players[playerName] = data.data[playerID];
           console.log('Players\' stats retrieved.');
         }),
@@ -92,14 +90,19 @@
             dataType: "json"
           }).done(function(data){
             // Stores MoE into the object containing other stats
-            for (let i = 0; i < data.data[playerID].length; i++){
-              // Check if a tank has any marks
-              if (data.data[playerID][i].achievements.marksOnGun){
-                players[playerName][i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
-              } else {
-                players[playerName][i].all.marksOnGun = 0;
-              }
-            }
+            if(data.data[playerID]) {
+              for (let i = 0; i < data.data[playerID].length; i++){
+                // Check if a tank has any marks
+                if (data.data[playerID][i].achievements.marksOnGun){
+                  players[playerName][i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
+                } else {
+                  players[playerName][i].all.marksOnGun = 0;
+                };
+              };
+            } else {
+
+              return;
+            };
             console.log('Players\' Marks of Excellence retrieved and stored');
 
             // Sorts the player object by battles played
@@ -155,8 +158,7 @@
       $(output).appendTo("table tbody");
     };
 
-    $(".loading-ring").addClass("hidden");
-    $("table").removeClass("hidden");
+    showLoading(0);
   };
 
   function sortBy(prop1, prop2) {
@@ -167,4 +169,14 @@
           return b[prop1] - a[prop1];
       };
     };
+  };
+
+  function showLoading(status) {
+    if(status === 1) {
+      $("table").addClass("hidden")
+      $(".loading-ring").removeClass("hidden");
+    } else {
+      $(".loading-ring").addClass("hidden");
+      $("table").removeClass("hidden");
+    }
   };
