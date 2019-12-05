@@ -1,9 +1,81 @@
 //document  
  
   let tanks,
-      table,
       players = {},
       currentPlayer;
+
+  var table = {
+    player: "",
+    stats: [],
+    getStats: function(player) {
+      this.stats = [];
+
+      for (prop of players[player]) {
+
+        if (tanks[prop.tank_id] === undefined) {
+          console.log(prop.tank_id);
+          continue
+        };
+
+        let obj =  {
+          ...prop.all,
+          ...tanks[prop.tank_id],
+          mark_of_mastery: prop.mark_of_mastery,
+          tank_id: prop.tank_id,
+          get win_rate() {
+            return Number(Math.round(this.wins / this.battles +"e4") + "e-2") + "%"
+          },
+          get battle_avg_dmg() {
+            return Number(Math.round(this.damage_dealt / this.battles +"e2")+"e-2")
+          }
+        }
+
+        this.stats.push(obj);
+      }
+
+      // Sort by battles (default)
+      this.stats.sort(sortBy("battles"));
+    },
+    makeTable: function(player = this.player) {
+      console.log("Making a table");
+
+      // Set table HTML to blank
+      $('table tbody').html("");
+
+      for (prop of table.stats){
+
+        let output = '<tr>' + 
+          '<th><img src=' + prop.images.contour_icon + '></th>' + 
+          '<td>' + prop.short_name + '</td>' + 
+          '<td>' + '<img src="assets/img/flags/' + prop.nation +'.png"></td>' +
+          '<td>' + '<span class="tanktype ' + prop.type + '"></span></td>' +
+          '<td>' + prop.tier + '</td>' +
+          '<td>' + prop.battle_avg_dmg +
+          '<td>' + prop.battle_avg_xp + '</td>' +
+          '<td>' + prop.battles + '</td>' +
+          '<td>' + prop.win_rate + '</td>';
+  
+          if (prop.mark_of_mastery){
+            output += '<td>' + '<img src="assets/img/mastery/' + prop.mark_of_mastery + '.png"></td>';
+          } else {
+            output += '<td></td>'
+          };
+  
+          if (prop.marksOnGun){
+            output += '<td>' + '<img src="assets/img/marks/' + prop.nation + '_' + prop.marksOnGun + '.png" class="moe"></td>';
+          } else {
+            output += '<td></td>';
+          };
+  
+        output += '</tr>';
+  
+        $(output).appendTo("table tbody");
+      };
+
+      this.player = player;
+      showLoading(0);
+    }
+  }
 
   getTanks();
 
@@ -46,7 +118,6 @@
     let playerID;
     let playerName = $('#search form input').val();
     let server = $("#inlineFormCustomSelectPref").val();
-    currentPlayer = playerName;
 
     // Check player name length
     if (playerName.length < 3) {
@@ -61,13 +132,19 @@
       return false;
     }
 
+    currentPlayer = playerName;
+
     // Show loading animation
     showLoading(1);
 
     // If players statistics exist in memory - show them, otherwise get them from the API and then show them
     if(players[playerName]){
-      console.log(playerName);
-      makeTable();
+      if (playerName === table.player) {
+        table.makeTable();
+      } else {
+        table.getStats(playerName);
+        table.makeTable(playerName);
+      }
     } else {   
       $.when(
         // Gets player ID
@@ -126,110 +203,14 @@
             };
             console.log('Players\' Marks of Excellence retrieved and stored');
 
-            makeTable();
+            table.getStats(playerName);
+            table.makeTable(playerName);
 
             console.log('Done!');
           })
         });
       });
     }
-  };
-
-  function makeTable(){
-    console.log("Making a table");
-    
-    // Set table HTML to blank
-    $('table tbody').html("");
-
-    // for (let i = 0, output; i < player.length; i++){
-
-    //   // Checks if there are any stats for the tank (wot API ignores old, removed/replaced, and some premium tanks)
-    //   if (tanks[player[i].tank_id] === undefined) {
-    //     console.log(i);
-    //     continue
-    //   };
-
-    //   output = '<tr>' + 
-    //       '<th><img src=' + tanks[player[i].tank_id].images.contour_icon + '></th>' + 
-    //       '<td>' + tanks[player[i].tank_id].short_name + '</td>' + 
-    //       '<td>' + '<img src="assets/img/flags/' + tanks[player[i].tank_id].nation +'.png"></td>' +
-    //       '<td>' + '<span class="tanktype ' + tanks[player[i].tank_id].type + '"></span></td>' +
-    //       '<td>' + tanks[player[i].tank_id].tier + '</td>' +
-    //       '<td>' + Number(Math.round(player[i].all.damage_dealt / player[i].all.battles +"e2")+"e-2") + '</td>' +
-    //       '<td>' + player[i].all.battle_avg_xp + '</td>' +
-    //       '<td>' + player[i].all.battles + '</td>' +
-    //       '<td>' + Number(Math.round(player[i].all.wins / player[i].all.battles +"e4") + "e-2") + "%" + '</td>';
-
-    //       if (player[i].mark_of_mastery){
-    //         output += '<td>' + '<img src="assets/img/mastery/' + player[i].mark_of_mastery + '.png"></td>';
-    //       } else {
-    //         output += '<td></td>'
-    //       };
-
-    //       if (player[i].all.marksOnGun){
-    //         output += '<td>' + '<img src="assets/img/marks/' + tanks[player[i].tank_id].nation + '_' + player[i].all.marksOnGun + '.png" class="moe"></td>';
-    //       } else {
-    //         output += '<td></td>';
-    //       };
-
-    table = [];
-
-    for (prop of players[currentPlayer]) {
-      if (tanks[prop.tank_id] === undefined) {
-        console.log(prop.tank_id);
-        continue
-      };
-
-      let obj =  {
-        ...prop.all,
-        ...tanks[prop.tank_id],
-        mark_of_mastery: prop.mark_of_mastery,
-        tank_id: prop.tank_id,
-        get win_rate() {
-          return Number(Math.round(this.wins / this.battles +"e4") + "e-2") + "%"
-        },
-        get battle_avg_dmg() {
-          return Number(Math.round(this.damage_dealt / this.battles +"e2")+"e-2")
-        }
-      }
-
-      table.push(obj);
-    }
-
-    table.sort(sortBy("battles"));
-
-    for (prop of table){
-
-     let output = '<tr>' + 
-        '<th><img src=' + prop.images.contour_icon + '></th>' + 
-        '<td>' + prop.short_name + '</td>' + 
-        '<td>' + '<img src="assets/img/flags/' + prop.nation +'.png"></td>' +
-        '<td>' + '<span class="tanktype ' + prop.type + '"></span></td>' +
-        '<td>' + prop.tier + '</td>' +
-        '<td>' + prop.battle_avg_dmg +
-        '<td>' + prop.battle_avg_xp + '</td>' +
-        '<td>' + prop.battles + '</td>' +
-        '<td>' + prop.win_rate + '</td>';
-
-        if (prop.mark_of_mastery){
-          output += '<td>' + '<img src="assets/img/mastery/' + prop.mark_of_mastery + '.png"></td>';
-        } else {
-          output += '<td></td>'
-        };
-
-        if (prop.marksOnGun){
-          output += '<td>' + '<img src="assets/img/marks/' + prop.nation + '_' + prop.marksOnGun + '.png" class="moe"></td>';
-        } else {
-          output += '<td></td>';
-        };
-
-
-      output += '</tr>';
-
-      $(output).appendTo("table tbody");
-    };
-
-    showLoading(0);
   };
 
   function sortBy(prop) {
