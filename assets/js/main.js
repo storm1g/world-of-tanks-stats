@@ -6,24 +6,28 @@
 
   var table = {
     player: "",
+    sortDirection: true,
     stats: [],
     getStats: function(player) {
+      // Reset table info
       this.stats = [];
 
       for (prop of players[player]) {
 
+        // Skip stat merging for tanks that don't get returned when getting tank list from the API
         if (tanks[prop.tank_id] === undefined) {
           console.log(prop.tank_id);
           continue
         };
 
+        // Merge required players' statistics and tank details into an array of objects
         let obj =  {
           ...prop.all,
           ...tanks[prop.tank_id],
           mark_of_mastery: prop.mark_of_mastery,
           tank_id: prop.tank_id,
           get win_rate() {
-            return Number(Math.round(this.wins / this.battles +"e4") + "e-2") + "%"
+            return Number(Math.round(this.wins / this.battles +"e4") + "e-2")
           },
           get battle_avg_dmg() {
             return Number(Math.round(this.damage_dealt / this.battles +"e2")+"e-2")
@@ -45,7 +49,7 @@
       for (prop of table.stats){
 
         let output = '<tr>' + 
-          '<th><img src=' + prop.images.contour_icon + '></th>' + 
+          '<td><img src=' + prop.images.contour_icon + '></td>' + 
           '<td>' + prop.short_name + '</td>' + 
           '<td>' + '<img src="assets/img/flags/' + prop.nation +'.png"></td>' +
           '<td>' + '<span class="tanktype ' + prop.type + '"></span></td>' +
@@ -53,7 +57,7 @@
           '<td>' + prop.battle_avg_dmg +
           '<td>' + prop.battle_avg_xp + '</td>' +
           '<td>' + prop.battles + '</td>' +
-          '<td>' + prop.win_rate + '</td>';
+          '<td>' + prop.win_rate + "%" + '</td>';
   
           if (prop.mark_of_mastery){
             output += '<td>' + '<img src="assets/img/mastery/' + prop.mark_of_mastery + '.png"></td>';
@@ -61,8 +65,8 @@
             output += '<td></td>'
           };
   
-          if (prop.marksOnGun){
-            output += '<td>' + '<img src="assets/img/marks/' + prop.nation + '_' + prop.marksOnGun + '.png" class="moe"></td>';
+          if (prop.marks_of_excellence){
+            output += '<td>' + '<img src="assets/img/marks/' + prop.nation + '_' + prop.marks_of_excellence + '.png" class="moe"></td>';
           } else {
             output += '<td></td>';
           };
@@ -82,11 +86,22 @@
   // Search button event listener
   $('#search form button').on("click", displayStats);
 
+  // Select all table headers except first, then attach event listeners to sort corresponding columns
+  const ths = document.querySelectorAll("table th:not(:first-child)")
+  for (el of ths) {
+    el.addEventListener("click", function(e){
+		let column = e.target.getAttribute("data-column");
+		console.log(column);
+    table.stats.sort(sortBy(column));
+		table.makeTable();
+	});
+};
+
   // Sorting
-  /*$('#moe').on("click", function(){
-    playerStats.sort(sortBy("all", "marksOnGun"));
-    makeTable();
-  }); */
+  // $('#moe').on("click", function(){
+  //   table.stats.sort(sortBy("marks_of_excellence"));
+  //   table.makeTable();
+  // });
   
 
   // Gets a list of all tanks in the game with: is_premium, contour_icon, short_name, nation, tier
@@ -192,9 +207,9 @@
               for (let i = 0; i < data.data[playerID].length; i++){
                 // Check if a tank has any marks
                 if (data.data[playerID][i].achievements.marksOnGun){
-                  players[playerName][i].all.marksOnGun = data.data[playerID][i].achievements.marksOnGun;
+                  players[playerName][i].all.marks_of_excellence = data.data[playerID][i].achievements.marksOnGun;
                 } else {
-                  players[playerName][i].all.marksOnGun = 0;
+                  players[playerName][i].all.marks_of_excellence = 0;
                 };
               };
             } else {
@@ -213,13 +228,22 @@
     }
   };
 
-  function sortBy(prop) {
+  function sortBy(key) {
+    // table.sortDirection = !table.sortDirection;
     return function(a, b) {
-      if (prop) {
-        return b[prop] - a[prop];
-      } else {
-          return b[prop] - a[prop];
-      };
+      if (typeof table.stats[0][key] === "number") {
+        return b[key] - a[key];
+      } else if (typeof table.stats[0][key] === "string") {
+          if (a[key] < b[key]) { return -1; }
+          if (a[key] < b[key]) { return 1; }
+          return 0;
+      }
+      
+      // if (table.sortDirection) {
+      //   return a[prop] - b[prop];
+      // } else {
+      //     return b[prop] - a[prop];
+      // };
     };
   };
 
