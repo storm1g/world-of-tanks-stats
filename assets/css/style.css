@@ -131,8 +131,26 @@ th {
   table-layout: fixed;
 }
 
-.asc {
-  
+.sort span,
+.desc span,
+.asc span {
+  pointer-events: none;
+  width: 10px;
+  height: auto;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.sort span {
+  content: url(../img/icons/sort.svg);
+}
+
+.asc span {
+  content: url(../img/icons/sort-up.svg);
+}
+
+.desc span {
+  content: url(../img/icons/sort-down.svg);
 }
 
 @media (min-width: 1200px) {

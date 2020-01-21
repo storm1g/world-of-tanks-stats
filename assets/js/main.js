@@ -73,7 +73,7 @@
 
       this.player = player;
       $('#name').text(this.player);
-      showLoading(0);
+      showLoading(1);
     }
   }
 
@@ -88,12 +88,31 @@
   for (el of ths) {
     el.addEventListener("click", function(e){
       if (table.sorting.currentColumn === e.target) {
+        
+        if (table.sorting.ascending) {
+          e.target.classList.remove("asc");
+          e.target.classList.add("desc")
+        } else {
+          e.target.classList.remove("desc");
+          e.target.classList.add("asc");
+        }
+        // change sorting direction
         table.sorting.ascending = !table.sorting.ascending;
+
       } else {
          // save current column selector for future icon reset
         table.sorting.lastColumn = table.sorting.currentColumn;
         // save target column selector
         table.sorting.currentColumn = e.target;
+        // reset sorting icon of the last column and set the icon of current column
+        if (table.sorting.ascending) {
+          table.sorting.lastColumn.classList.remove("asc");
+          table.sorting.currentColumn.classList.add("asc");
+        } else {
+          table.sorting.lastColumn.classList.remove("desc");
+          table.sorting.currentColumn.classList.add("desc");
+        }
+        
       }
       // extract name of the column to sort by it
       let column = e.target.getAttribute("data-column");
@@ -150,7 +169,7 @@
     currentPlayer = playerName;
 
     // Show loading animation
-    showLoading(1);
+    showLoading(2);
 
     // If players statistics exist in memory - show them, otherwise get them from the API and then show them
     if(players[playerName]){
@@ -174,8 +193,9 @@
             players[playerName] = [];
             console.log('Players\' ID retrieved.' + playerID);
           } else {
-            $(".loading-ring").addClass("hidden");
+            showLoading(0);
             window.alert("Player does not exist!");
+            
           }
         })
       ).then(function() {
@@ -209,6 +229,8 @@
             }
             console.log('Players\' stats retrieved.');
           } else {
+            delete players[playerName];
+            showLoading(0);
             window.alert('Player has no statistics!');
           }
         }),
@@ -272,13 +294,17 @@
   };
 
   function showLoading(status) {
-    if(status === 1) {
+    if (status === 2) {
       $("table").addClass("hidden");
       $("#name").addClass("hidden");
       $(".loading-ring").removeClass("hidden");
-    } else {
+    } else if (status === 1) {
       $(".loading-ring").addClass("hidden");
       $("table").removeClass("hidden");
       $("#name").removeClass("hidden");
+    } else {
+      $(".loading-ring").addClass("hidden");
+      $("table").addClass("hidden");
+      $("#name").addClass("hidden");
     }
   };
