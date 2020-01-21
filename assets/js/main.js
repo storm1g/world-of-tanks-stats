@@ -6,32 +6,27 @@
 
   var table = {
     player: "",
-    sortDirection: true,
+    sorting: {
+      currentColumn: document.querySelector("#battles"),
+      ascending: false 
+    },
     stats: [],
     getStats: function(player) {
       // Reset table info
       this.stats = [];
 
-      for (prop of players[player]) {
+      for (el of players[player]) {
 
         // Skip stat merging for tanks that don't get returned when getting tank list from the API
-        if (tanks[prop.tank_id] === undefined) {
-          console.log(prop.tank_id);
+        if (tanks[el.tank_id] === undefined) {
+          console.log(el.tank_id);
           continue
         };
 
         // Merge required players' statistics and tank details into an array of objects
         let obj =  {
-          ...prop.all,
-          ...tanks[prop.tank_id],
-          mark_of_mastery: prop.mark_of_mastery,
-          tank_id: prop.tank_id,
-          get win_rate() {
-            return Number(Math.round(this.wins / this.battles +"e4") + "e-2")
-          },
-          get battle_avg_dmg() {
-            return Number(Math.round(this.damage_dealt / this.battles +"e2")+"e-2")
-          }
+          ...el,
+          ...tanks[el.tank_id]
         }
 
         this.stats.push(obj);
@@ -44,7 +39,7 @@
       console.log("Making a table");
 
       // Set table HTML to blank
-      $('table tbody').html("");
+      $('#tanks tbody').html("");
 
       for (prop of table.stats){
 
@@ -73,10 +68,11 @@
   
         output += '</tr>';
   
-        $(output).appendTo("table tbody");
+        $(output).appendTo("#tanks tbody");
       };
 
       this.player = player;
+      $('#name').text(this.player);
       showLoading(0);
     }
   }
@@ -84,24 +80,28 @@
   getTanks();
 
   // Search button event listener
-  $('#search form button').on("click", displayStats);
+  $('#search form button').on("click", sendRequests);
 
   // Select all table headers except first, then attach event listeners to sort corresponding columns
-  const ths = document.querySelectorAll("table th:not(:first-child)")
+  const ths = document.querySelectorAll("#tanks th:not(:first-child)")
+
   for (el of ths) {
     el.addEventListener("click", function(e){
-		let column = e.target.getAttribute("data-column");
-		console.log(column);
-    table.stats.sort(sortBy(column));
-		table.makeTable();
-	});
-};
-
-  // Sorting
-  // $('#moe').on("click", function(){
-  //   table.stats.sort(sortBy("marks_of_excellence"));
-  //   table.makeTable();
-  // });
+      if (table.sorting.currentColumn === e.target) {
+        table.sorting.ascending = !table.sorting.ascending;
+      } else {
+         // save current column selector for future icon reset
+        table.sorting.lastColumn = table.sorting.currentColumn;
+        // save target column selector
+        table.sorting.currentColumn = e.target;
+      }
+      // extract name of the column to sort by it
+      let column = e.target.getAttribute("data-column");
+      table.stats.sort(sortBy(column));
+      //e.target.classList.add("asc");
+      table.makeTable();
+	  });
+  };
   
 
   // Gets a list of all tanks in the game with: is_premium, contour_icon, short_name, nation, tier
@@ -126,7 +126,7 @@
   };
 
   // Gets players' stats and creates a complete table with all data
-  function displayStats(){
+  function sendRequests(){
     // prevents page reloading bug after using search
     event.preventDefault();
 
@@ -171,7 +171,7 @@
           // Checks if the player exists
           if (data.meta.count === 1){
             playerID = data.data[0].account_id;
-            players[playerName] = {};
+            players[playerName] = [];
             console.log('Players\' ID retrieved.' + playerID);
           } else {
             $(".loading-ring").addClass("hidden");
@@ -187,7 +187,26 @@
           dataType: "json"
         }).done(function(data){
           if (data.data[playerID]) {
-            players[playerName] = data.data[playerID];
+            //players[playerName] = data.data[playerID];
+
+            for (el of data.data[playerID]) {
+      
+              // Merge required players' statistics and tank details into an array of objects
+              let obj =  {
+                ...el.all,
+                // ...tanks[el.tank_id],
+                mark_of_mastery: el.mark_of_mastery,
+                tank_id: el.tank_id,
+                get win_rate() {
+                  return Number(Math.round(this.wins / this.battles +"e4") + "e-2")
+                },
+                get battle_avg_dmg() {
+                  return Number(Math.round(this.damage_dealt / this.battles +"e2")+"e-2")
+                }
+              }
+      
+              players[playerName].push(obj);
+            }
             console.log('Players\' stats retrieved.');
           } else {
             window.alert('Player has no statistics!');
@@ -207,20 +226,20 @@
               for (let i = 0; i < data.data[playerID].length; i++){
                 // Check if a tank has any marks
                 if (data.data[playerID][i].achievements.marksOnGun){
-                  players[playerName][i].all.marks_of_excellence = data.data[playerID][i].achievements.marksOnGun;
+                  players[playerName][i].marks_of_excellence = data.data[playerID][i].achievements.marksOnGun;
                 } else {
-                  players[playerName][i].all.marks_of_excellence = 0;
+                  players[playerName][i].marks_of_excellence = 0;
                 };
               };
             } else {
-
-              return;
+                return;
             };
             console.log('Players\' Marks of Excellence retrieved and stored');
 
             table.getStats(playerName);
             table.makeTable(playerName);
 
+            table.player = playerName;
             console.log('Done!');
           })
         });
@@ -232,27 +251,34 @@
     // table.sortDirection = !table.sortDirection;
     return function(a, b) {
       if (typeof table.stats[0][key] === "number") {
-        return b[key] - a[key];
+        // check sorting direction
+        if (table.sorting.ascending) {
+          return a[key] - b[key];
+        } else {
+            return b[key] - a[key];
+        }
       } else if (typeof table.stats[0][key] === "string") {
+        if (table.sorting.ascending) {
+          if (a[key] > b[key]) { return 1; }
           if (a[key] < b[key]) { return -1; }
-          if (a[key] < b[key]) { return 1; }
           return 0;
+        } else {
+            if (a[key] > b[key]) { return -1; }
+            if (a[key] < b[key]) { return 1; }
+            return 0;
+        }
       }
-      
-      // if (table.sortDirection) {
-      //   return a[prop] - b[prop];
-      // } else {
-      //     return b[prop] - a[prop];
-      // };
     };
   };
 
   function showLoading(status) {
     if(status === 1) {
-      $("table").addClass("hidden")
+      $("table").addClass("hidden");
+      $("#name").addClass("hidden");
       $(".loading-ring").removeClass("hidden");
     } else {
       $(".loading-ring").addClass("hidden");
       $("table").removeClass("hidden");
+      $("#name").removeClass("hidden");
     }
   };
