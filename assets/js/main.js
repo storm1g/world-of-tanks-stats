@@ -1,21 +1,25 @@
 //document  
  
   let tanks,
-      players = {},
+      players = {
+        eu: {},
+        com: {},
+        ru: {}
+      },
       currentPlayer;
 
   var table = {
     player: "",
     sorting: {
-      currentColumn: document.querySelector("#battles"),
-      ascending: false 
+      ascending: false,
+      currentColumn: document.querySelector("#battles")
     },
     stats: [],
-    getStats: function(player) {
+    getStats: function(server, player) {
       // Reset table info
       this.stats = [];
 
-      for (el of players[player]) {
+      for (el of players[server][player]) {
 
         // Skip stat merging for tanks that don't get returned when getting tank list from the API
         if (tanks[el.tank_id] === undefined) {
@@ -73,6 +77,7 @@
 
       this.player = player;
       $('#name').text(this.player);
+      
       showLoading(1);
     }
   }
@@ -115,9 +120,8 @@
         
       }
       // extract name of the column to sort by it
-      let column = e.target.getAttribute("data-column");
-      table.stats.sort(sortBy(column));
-      //e.target.classList.add("asc");
+      let colName = e.target.getAttribute("data-column");
+      table.stats.sort(sortBy(colName));
       table.makeTable();
 	  });
   };
@@ -125,21 +129,24 @@
 
   // Gets a list of all tanks in the game with: is_premium, contour_icon, short_name, nation, tier
   function getTanks(){
-    tankList = JSON.parse(localStorage.getItem('tankList'));
+    tankList = JSON.parse(sessionStorage.getItem('tankList'));
     
     if (tankList) {
       tanks = tankList;
-      console.log('List of tanks retrieved from localStorage');
+      console.log('List of tanks retrieved from sessionStorage');
     } else {
-      console.log('sending tankList request')
+      console.log('Sending tankList request')
+      $('#loading-text').text("Loading available vehicles...");
+      showLoading(3);
       $.ajax({
         method: "GET",
         url: "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&fields=is_premium%2C+images.contour_icon%2C+type%2C+short_name%2C+nation%2C+tier%2C",
         dataType: "json"
       }).done(function(data){
         tanks = data.data;
-        localStorage.setItem('tankList', JSON.stringify(tanks));
-        console.log('List of tanks retrieved from the API and saved to localStorage.');
+        sessionStorage.setItem('tankList', JSON.stringify(tanks));
+        console.log('List of tanks retrieved from the API and saved to sessionStorage.');
+        showLoading(0);
       });
     }
   };
@@ -159,7 +166,7 @@
       return false;
     }
 
-    // Check invalid characters
+    // Check for invalid characters
     let regExp = /^[0-9a-zA-Z_]+$/;
     if (!regExp.test(playerName)) {
       window.alert("Please use characters A-Z, numbers and underscores")
@@ -169,45 +176,44 @@
     currentPlayer = playerName;
 
     // Show loading animation
+    $('#loading-text').text("Loading player statistics...");
     showLoading(2);
 
     // If players statistics exist in memory - show them, otherwise get them from the API and then show them
-    if(players[playerName]){
+    if(players[server][playerName]){
       if (playerName === table.player) {
         table.makeTable();
       } else {
-        table.getStats(playerName);
+        table.getStats(server, playerName);
         table.makeTable(playerName);
       }
     } else {   
       $.when(
-        // Gets player ID
+        // Get player ID
         $.ajax({
           method: "GET",
           url: `https://api.worldoftanks.${server}/wot/account/list/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&search=${playerName}&type=exact`,
           dataType: "json"
         }).done(function(data){
-          // Checks if the player exists
+          // Check if the player exists
           if (data.meta.count === 1){
             playerID = data.data[0].account_id;
-            players[playerName] = [];
+            players[server][playerName] = [];
             console.log('Players\' ID retrieved.' + playerID);
           } else {
             showLoading(0);
             window.alert("Player does not exist!");
-            
           }
         })
       ).then(function() {
         $.when(
-      // Gets a list of players' tanks + wins, battles, damage dealt, avg. xp and mark of mastery (0-4)
+      // Get a list of players' tanks + wins, battles, damage dealt, avg. xp and mark of mastery (0-4)
         $.ajax({
           method: "GET",
           url: `https://api.worldoftanks.${server}/wot/tanks/stats/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=${playerID}&fields=all.damage_dealt%2C+all.battles%2C+all.battle_avg_xp%2C+all.wins%2C+mark_of_mastery%2C+tank_id`,
           dataType: "json"
         }).done(function(data){
           if (data.data[playerID]) {
-            //players[playerName] = data.data[playerID];
 
             for (el of data.data[playerID]) {
       
@@ -225,32 +231,32 @@
                 }
               }
       
-              players[playerName].push(obj);
+              players[server][playerName].push(obj);
             }
             console.log('Players\' stats retrieved.');
           } else {
-            delete players[playerName];
+            delete players[server][playerName];
             showLoading(0);
             window.alert('Player has no statistics!');
           }
         }),
 
-      // Gets a list of players' achievements including Marks of Excellence
+      // Get a list of players' achievements including Marks of Excellence
         ).then(function() {
           $.ajax({
             method: "GET",
             url: `https://api.worldoftanks.${server}/wot/tanks/achievements/?application_id=6d2ad8ec3cf857de529a60c5ce6f73f0&account_id=${playerID}&fields=achievements%2C+tank_id`,
             dataType: "json"
           }).done(function(data){
-            // Stores MoE into the object containing other stats
+            // Store MoE into the object containing other stats
             if(data.data[playerID]) {
               console.log(data.data[playerID]);
               for (let i = 0; i < data.data[playerID].length; i++){
                 // Check if a tank has any marks
                 if (data.data[playerID][i].achievements.marksOnGun){
-                  players[playerName][i].marks_of_excellence = data.data[playerID][i].achievements.marksOnGun;
+                  players[server][playerName][i].marks_of_excellence = data.data[playerID][i].achievements.marksOnGun;
                 } else {
-                  players[playerName][i].marks_of_excellence = 0;
+                  players[server][playerName][i].marks_of_excellence = 0;
                 };
               };
             } else {
@@ -258,7 +264,7 @@
             };
             console.log('Players\' Marks of Excellence retrieved and stored');
 
-            table.getStats(playerName);
+            table.getStats(server, playerName);
             table.makeTable(playerName);
 
             table.player = playerName;
@@ -270,10 +276,9 @@
   };
 
   function sortBy(key) {
-    // table.sortDirection = !table.sortDirection;
     return function(a, b) {
       if (typeof table.stats[0][key] === "number") {
-        // check sorting direction
+        // Check sorting direction
         if (table.sorting.ascending) {
           return a[key] - b[key];
         } else {
@@ -294,17 +299,32 @@
   };
 
   function showLoading(status) {
-    if (status === 2) {
+    // Show loading ring only
+    if (status === 3) {
+      $("#search").addClass("hidden");
       $("table").addClass("hidden");
       $("#name").addClass("hidden");
-      $(".loading-ring").removeClass("hidden");
+      $(".loading-wrapper").removeClass("hidden");
+      // Show Form and loading ring
+    } else if (status === 2) {
+      $("table").addClass("hidden");
+      $("#name").addClass("hidden");
+      $(".loading-wrapper").removeClass("hidden");
+      // Hide loading ring and show Table and Name
     } else if (status === 1) {
-      $(".loading-ring").addClass("hidden");
+      $(".loading-wrapper").addClass("hidden");
       $("table").removeClass("hidden");
       $("#name").removeClass("hidden");
+      // Hide everything except Form element
     } else {
-      $(".loading-ring").addClass("hidden");
+      $("#search").removeClass("hidden");
+      $(".loading-wrapper").addClass("hidden");
       $("table").addClass("hidden");
       $("#name").addClass("hidden");
     }
   };
+
+
+  function loadingText(text) {
+    
+  }

@@ -12,25 +12,31 @@ th {
   text-align: center;
 }
 
+.loading-wrapper {
+  margin: 20vh auto;
+}
+
+#loading-text {
+  display: block;
+  margin: 1rem auto;
+}
+
 /* Loader */
 .loading-ring {
   display: inline-block;
-  width: 100px;
-  height: 100px;
-  position: fixed;
-  top: 50%;
 }
+
 .loading-ring:after {
   content: " ";
   display: block;
   width: 82px;
   height: 82px;
-  margin: 1px;
   border-radius: 50%;
   border: 7px solid #007bff;
   border-color: #007bff transparent #007bff transparent;
   animation: loading-ring 1.2s linear infinite;
 }
+
 @keyframes loading-ring {
   0% {
     transform: rotate(0deg);
