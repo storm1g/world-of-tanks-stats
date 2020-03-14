@@ -12,7 +12,8 @@
     player: "",
     sorting: {
       ascending: false,
-      currentColumn: document.querySelector("#battles")
+      defaultColumn: document.querySelector("#battles"), 
+      currentColumn: this.defaultColumn
     },
     stats: [],
     getStats: function(server, player) {
@@ -37,10 +38,13 @@
       }
 
       // Sort by battles (default)
-      this.stats.sort(sortBy("battles"));
+      this.stats.sort(sortBy("battles", true));
+
     },
     makeTable: function(player = this.player) {
       console.log("Making a table");
+
+
 
       // Set table HTML to blank
       $('#tanks tbody').html("");
@@ -263,6 +267,7 @@
                 return;
             };
             console.log('Players\' Marks of Excellence retrieved and stored');
+            console.log(data.data[playerID])
 
             table.getStats(server, playerName);
             table.makeTable(playerName);
@@ -275,7 +280,18 @@
     }
   };
 
-  function sortBy(key) {
+  function sortBy(key, first) {
+    if (first) {
+      if (table.sorting.lastColumn) {
+        table.sorting.ascending = false;
+        table.sorting.lastColumn = table.sorting.currentColumn;
+        table.sorting.lastColumn.classList.remove("asc", "desc");
+      }
+
+      table.sorting.currentColumn = table.sorting.defaultColumn;
+      table.sorting.currentColumn.classList.add("desc");
+    }
+
     return function(a, b) {
       if (typeof table.stats[0][key] === "number") {
         // Check sorting direction
