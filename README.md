@@ -8,10 +8,10 @@ HOW TO USE:
 - Press Search
 - Wait for the app to retrieve your statistics
 
-If you are not a World of Tanks player and want to test out the app, you can use one of these usernames: 
-<b>
+<b>If you are not a World of Tanks player and want to test out the app, you can use one of these usernames:</b></br>
+
   storm__</br>
   quickfingers</br>
   svenemator</br>
   New_Death</br>
-</b>
+
